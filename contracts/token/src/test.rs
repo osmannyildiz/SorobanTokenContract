@@ -1,6 +1,6 @@
 #![cfg(test)]
 
-use super::*;
+use crate::contract::{Contract, ContractClient};
 use soroban_sdk::{vec, Env, String};
 
 #[test]
