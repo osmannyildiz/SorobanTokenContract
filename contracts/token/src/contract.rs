@@ -1,11 +1,189 @@
-use soroban_sdk::{contract, contractimpl, vec, Env, String, Vec};
+use crate::{
+    constants::{INSTANCE_TTL_FULL, INSTANCE_TTL_THRESHOLD},
+    utils::{
+        admin::{has_admin, read_admin, write_admin},
+        allowance::{read_allowance, spend_allowance, write_allowance},
+        balance::{decrease_balance, increase_balance, read_balance},
+        metadata::{read_decimal, read_name, read_symbol, write_metadata},
+    },
+};
+use soroban_sdk::{
+    contract, contractimpl,
+    token::{self, Interface as _},
+    Address, Env, String,
+};
+use soroban_token_sdk::{metadata::TokenMetadata, TokenUtils};
+
+fn assert_nonnegative_amount(amount: i128) {
+    if amount < 0 {
+        panic!("negative amount is not allowed: {}", amount);
+    }
+}
 
 #[contract]
-pub struct Contract;
+pub struct TokenContract;
 
 #[contractimpl]
-impl Contract {
-    pub fn hello(env: Env, to: String) -> Vec<String> {
-        vec![&env, String::from_str(&env, "Hello"), to]
+impl TokenContract {
+    pub fn initialize(env: Env, admin: Address, decimal: u32, name: String, symbol: String) {
+        if has_admin(&env) {
+            panic!("already initialized");
+        }
+
+        if decimal > u8::MAX.into() {
+            panic!("decimal must fit in a u8");
+        }
+
+        write_admin(&env, &admin);
+
+        write_metadata(
+            &env,
+            TokenMetadata {
+                decimal,
+                name,
+                symbol,
+            },
+        );
+    }
+
+    pub fn mint(env: Env, to: Address, amount: i128) {
+        let admin = read_admin(&env);
+        admin.require_auth();
+
+        assert_nonnegative_amount(amount);
+
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_TTL_THRESHOLD, INSTANCE_TTL_FULL);
+
+        increase_balance(&env, to.clone(), amount);
+
+        TokenUtils::new(&env).events().mint(admin, to, amount);
+    }
+
+    pub fn set_admin(env: Env, new_admin: Address) {
+        let admin = read_admin(&env);
+        admin.require_auth();
+
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_TTL_THRESHOLD, INSTANCE_TTL_FULL);
+
+        write_admin(&env, &new_admin);
+
+        TokenUtils::new(&env).events().set_admin(admin, new_admin);
+    }
+}
+
+#[contractimpl]
+impl token::Interface for TokenContract {
+    fn allowance(env: Env, from: Address, spender: Address) -> i128 {
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_TTL_THRESHOLD, INSTANCE_TTL_FULL);
+
+        read_allowance(&env, from, spender).amount
+    }
+
+    fn approve(env: Env, from: Address, spender: Address, amount: i128, expiration_ledger: u32) {
+        from.require_auth();
+
+        assert_nonnegative_amount(amount);
+
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_TTL_THRESHOLD, INSTANCE_TTL_FULL);
+
+        write_allowance(
+            &env,
+            from.clone(),
+            spender.clone(),
+            amount,
+            expiration_ledger,
+        );
+
+        TokenUtils::new(&env)
+            .events()
+            .approve(from, spender, amount, expiration_ledger);
+    }
+
+    fn balance(env: Env, id: Address) -> i128 {
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_TTL_THRESHOLD, INSTANCE_TTL_FULL);
+
+        read_balance(&env, id)
+    }
+
+    fn transfer(env: Env, from: Address, to: Address, amount: i128) {
+        from.require_auth();
+
+        assert_nonnegative_amount(amount);
+
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_TTL_THRESHOLD, INSTANCE_TTL_FULL);
+
+        decrease_balance(&env, from.clone(), amount);
+        increase_balance(&env, to.clone(), amount);
+
+        TokenUtils::new(&env).events().transfer(from, to, amount);
+    }
+
+    fn transfer_from(env: Env, spender: Address, from: Address, to: Address, amount: i128) {
+        spender.require_auth();
+
+        assert_nonnegative_amount(amount);
+
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_TTL_THRESHOLD, INSTANCE_TTL_FULL);
+
+        spend_allowance(&env, from.clone(), spender, amount);
+        decrease_balance(&env, from.clone(), amount);
+        increase_balance(&env, to.clone(), amount);
+
+        TokenUtils::new(&env).events().transfer(from, to, amount);
+    }
+
+    fn burn(env: Env, from: Address, amount: i128) {
+        from.require_auth();
+
+        assert_nonnegative_amount(amount);
+
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_TTL_THRESHOLD, INSTANCE_TTL_FULL);
+
+        decrease_balance(&env, from.clone(), amount);
+
+        TokenUtils::new(&env).events().burn(from, amount);
+    }
+
+    fn burn_from(env: Env, spender: Address, from: Address, amount: i128) {
+        spender.require_auth();
+
+        assert_nonnegative_amount(amount);
+
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_TTL_THRESHOLD, INSTANCE_TTL_FULL);
+
+        spend_allowance(&env, from.clone(), spender, amount);
+        decrease_balance(&env, from.clone(), amount);
+
+        TokenUtils::new(&env).events().burn(from, amount);
+    }
+
+    fn decimals(env: Env) -> u32 {
+        read_decimal(&env)
+    }
+
+    fn name(env: Env) -> String {
+        read_name(&env)
+    }
+
+    fn symbol(env: Env) -> String {
+        read_symbol(&env)
     }
 }
