@@ -21,4 +21,5 @@ pub enum DataKey {
     Nonce(Address),
     State(Address),
     Admin,
+    Frozen(Address),
 }

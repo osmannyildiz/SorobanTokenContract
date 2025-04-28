@@ -1,4 +1,4 @@
-use crate::storage_types::DataKey;
+use crate::storage::DataKey;
 use soroban_sdk::{Address, Env};
 
 pub fn has_admin(env: &Env) -> bool {

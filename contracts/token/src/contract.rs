@@ -1,5 +1,6 @@
 use crate::{
     constants::{INSTANCE_TTL_FULL, INSTANCE_TTL_THRESHOLD},
+    storage::DataKey,
     utils::{
         admin::{has_admin, read_admin, write_admin},
         allowance::{read_allowance, spend_allowance, write_allowance},
@@ -18,6 +19,24 @@ fn assert_nonnegative_amount(amount: i128) {
     if amount < 0 {
         panic!("negative amount is not allowed: {}", amount);
     }
+}
+
+fn assert_account_not_frozen(env: &Env, account: &Address) {
+    let key = DataKey::Frozen(account.clone());
+    if env
+        .storage()
+        .instance()
+        .get::<_, bool>(&key)
+        .unwrap_or(false)
+    {
+        panic!("account is frozen");
+    }
+}
+
+fn emit_custom_event(env: &Env, event_type: &str, admin: Address, account: Address) {
+    let topics = (event_type, admin, account);
+    let data = ();
+    env.events().publish(topics, data);
 }
 
 #[contract]
@@ -73,6 +92,34 @@ impl TokenContract {
 
         TokenUtils::new(&env).events().set_admin(admin, new_admin);
     }
+
+    pub fn freeze_account(env: Env, account: Address) {
+        let admin = read_admin(&env);
+        admin.require_auth();
+
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_TTL_THRESHOLD, INSTANCE_TTL_FULL);
+
+        let key = DataKey::Frozen(account.clone());
+        env.storage().instance().set(&key, &true);
+
+        emit_custom_event(&env, "freeze_account", admin, account);
+    }
+
+    pub fn unfreeze_account(env: Env, account: Address) {
+        let admin = read_admin(&env);
+        admin.require_auth();
+
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_TTL_THRESHOLD, INSTANCE_TTL_FULL);
+
+        let key = DataKey::Frozen(account.clone());
+        env.storage().instance().remove(&key);
+
+        emit_custom_event(&env, "unfreeze_account", admin, account);
+    }
 }
 
 #[contractimpl]
@@ -119,6 +166,7 @@ impl token::Interface for TokenContract {
         from.require_auth();
 
         assert_nonnegative_amount(amount);
+        assert_account_not_frozen(&env, &from);
 
         env.storage()
             .instance()
@@ -134,6 +182,7 @@ impl token::Interface for TokenContract {
         spender.require_auth();
 
         assert_nonnegative_amount(amount);
+        assert_account_not_frozen(&env, &from);
 
         env.storage()
             .instance()
@@ -150,6 +199,7 @@ impl token::Interface for TokenContract {
         from.require_auth();
 
         assert_nonnegative_amount(amount);
+        assert_account_not_frozen(&env, &from);
 
         env.storage()
             .instance()
@@ -164,6 +214,7 @@ impl token::Interface for TokenContract {
         spender.require_auth();
 
         assert_nonnegative_amount(amount);
+        assert_account_not_frozen(&env, &from);
 
         env.storage()
             .instance()

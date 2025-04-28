@@ -1,4 +1,4 @@
-use crate::storage_types::{AllowanceData, AllowanceDataKey, DataKey};
+use crate::storage::{AllowanceData, AllowanceDataKey, DataKey};
 use soroban_sdk::{Address, Env};
 
 pub fn read_allowance(env: &Env, owner: Address, spender: Address) -> AllowanceData {

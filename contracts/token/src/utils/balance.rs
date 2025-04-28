@@ -1,6 +1,6 @@
 use crate::{
     constants::{BALANCE_TTL_FULL, BALANCE_TTL_THRESHOLD},
-    storage_types::DataKey,
+    storage::DataKey,
 };
 use soroban_sdk::{Address, Env};
 
