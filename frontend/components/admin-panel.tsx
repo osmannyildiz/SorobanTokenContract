@@ -13,10 +13,7 @@ import { Loader2, Plus, ShieldAlert, UserCheck, UserX } from "lucide-react"
 import { useWalletStore } from "@/lib/stores/wallet-store"
 
 export default function AdminPanel() {
-  const { isConnected, publicKey } = useWalletStore((state) => ({
-    isConnected: state.isConnected,
-    publicKey: state.publicKey,
-  }))
+  const { isConnected, publicKey } = useWalletStore()
 
   const [mintAddress, setMintAddress] = useState("")
   const [mintAmount, setMintAmount] = useState("")
