@@ -35,7 +35,7 @@ pub fn decrease_balance(env: &Env, address: Address, amount: i128) {
     let balance = read_balance(env, address.clone());
 
     if balance < amount {
-        panic!("insufficient balance");
+        panic!("Insufficient balance");
     }
 
     write_balance(env, address, balance - amount);

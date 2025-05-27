@@ -15,9 +15,12 @@ use soroban_sdk::{
 };
 use soroban_token_sdk::{metadata::TokenMetadata, TokenUtils};
 
+#[cfg(test)]
+use crate::storage::{AllowanceData, AllowanceDataKey};
+
 fn assert_nonnegative_amount(amount: i128) {
     if amount < 0 {
-        panic!("negative amount is not allowed: {}", amount);
+        panic!("Negative amount is not allowed: {}", amount);
     }
 }
 
@@ -29,7 +32,7 @@ fn assert_account_not_frozen(env: &Env, account: &Address) {
         .get::<_, bool>(&key)
         .unwrap_or(false)
     {
-        panic!("account is frozen");
+        panic!("Account is frozen");
     }
 }
 
@@ -46,11 +49,12 @@ pub struct TokenContract;
 impl TokenContract {
     pub fn initialize(env: Env, admin: Address, decimal: u32, name: String, symbol: String) {
         if has_admin(&env) {
-            panic!("already initialized");
+            panic!("Already initialized");
         }
 
-        if decimal > u8::MAX.into() {
-            panic!("decimal must fit in a u8");
+        // https://solana.stackexchange.com/q/1293
+        if decimal > 18 {
+            panic!("Decimal must not be greater than 18");
         }
 
         write_admin(&env, &admin);
@@ -119,6 +123,15 @@ impl TokenContract {
         env.storage().instance().remove(&key);
 
         emit_custom_event(&env, "unfreeze_account", admin, account);
+    }
+
+    #[cfg(test)]
+    pub fn test_get_allowance(env: Env, from: Address, spender: Address) -> Option<AllowanceData> {
+        let key = DataKey::Allowance(AllowanceDataKey {
+            owner: from,
+            spender,
+        });
+        env.storage().temporary().get::<_, AllowanceData>(&key)
     }
 }
 

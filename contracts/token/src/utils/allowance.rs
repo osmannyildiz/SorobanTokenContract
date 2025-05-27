@@ -54,7 +54,11 @@ pub fn spend_allowance(env: &Env, owner: Address, spender: Address, spend_amount
     let allowance = read_allowance(env, owner.clone(), spender.clone());
 
     if allowance.amount < spend_amount {
-        panic!("insufficient allowance");
+        panic!("Insufficient allowance");
+    }
+
+    if spend_amount == 0 {
+        return;
     }
 
     let new_amount = allowance.amount - spend_amount;
