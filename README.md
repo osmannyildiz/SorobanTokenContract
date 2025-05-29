@@ -68,6 +68,16 @@ stellar contract optimize --wasm target/wasm32-unknown-unknown/release/token.was
 stellar contract deploy --wasm target/wasm32-unknown-unknown/release/token.optimized.wasm --source alice --network testnet --alias token
 ```
 
+### Generating TypeScript Client
+
+```bash
+cd frontend
+cp -R ../.stellar .stellar
+stellar contract bindings typescript --network testnet --contract-id token --output-dir packages/token
+npm install
+npm run build
+```
+
 ### Starting the Frontend
 
 ```bash

@@ -8,14 +8,18 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
+import { useTokenClient } from "@/hooks/use-token-client"
 import { Loader2, RefreshCw, Send, Trash2 } from "lucide-react"
 import { useWalletStore } from "@/lib/stores/wallet-store"
+import { getTokenMetadata } from "@/lib/ledger-data"
 import { formatTokenAmount } from "@/lib/utils"
 
 export default function Dashboard() {
   const { isConnected, publicKey } = useWalletStore()
+  const tokenClient = useTokenClient() // TODO Remove if not needed
 
   const [balance, setBalance] = useState<string | null>(null)
+  const [tokenSymbol, setTokenSymbol] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [recipient, setRecipient] = useState("")
@@ -27,7 +31,6 @@ export default function Dashboard() {
 
   const { toast } = useToast()
 
-  // Memoize fetchBalance to avoid recreating it on every render
   const fetchBalance = useCallback(async () => {
     if (!isConnected) return
 
@@ -37,10 +40,30 @@ export default function Dashboard() {
       await new Promise((resolve) => setTimeout(resolve, 1000))
       setBalance("1000.00")
     } catch (error) {
-      console.error("Failed to fetch balance:", error)
+      console.error("Failed to fetch token balance:", error)
       toast({
         title: "Error",
         description: "Failed to fetch token balance",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
+    }
+  }, [isConnected, toast])
+  
+  const fetchTokenSymbol = useCallback(async () => {
+    if (!isConnected) return
+
+    setIsLoading(true)
+    try {
+      const {symbol} = await getTokenMetadata()
+      setTokenSymbol(symbol)
+    } catch (error) {
+      console.error("Failed to fetch token symbol:", error)
+      toast({
+        title: "Error",
+        description: "Failed to fetch token symbol",
         variant: "destructive",
       })
     } finally {
@@ -53,6 +76,7 @@ export default function Dashboard() {
     // Only fetch on initial connection and when not already initialized
     if (isConnected && !hasInitialized) {
       fetchBalance()
+      fetchTokenSymbol()
       setHasInitialized(true)
     }
 
@@ -192,7 +216,7 @@ export default function Dashboard() {
           ) : (
             <div>
               <div className="text-3xl font-bold">{balance ? formatTokenAmount(balance) : "0.00"}</div>
-              <p className="text-xs text-muted-foreground">TOKEN</p>
+              <p className="text-xs text-muted-foreground">{tokenSymbol}</p>
             </div>
           )}
         </CardContent>
