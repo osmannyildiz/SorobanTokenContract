@@ -66,6 +66,9 @@ cargo test
 ```bash
 stellar contract optimize --wasm target/wasm32v1-none/release/token.wasm
 stellar contract deploy --wasm target/wasm32v1-none/release/token.optimized.wasm --source alice --network testnet --alias token
+
+# Don't forget to initialize the contract!
+stellar contract invoke --id token --source alice --network testnet -- initialize --admin alice --decimal 18 --name "Osi Token" --symbol OSI
 ```
 
 ### Generating TypeScript Client
