@@ -2,7 +2,7 @@
 
 A feature-rich token contract implementation for the Stellar blockchain, with advanced functionality including minting, burning, freezing accounts, and granular administrative controls.
 
-> Deployed on Testnet: [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CAVRFSIJH2TKGS72XBIR4QKN24ZH6UJ4H7IWLSCKQWTPFMVAJMDESSRI)
+> Deployed on Testnet: [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CCRNUHL5YMSNC4D3JZIRB22IQEVUXK6OTGI2RHNPU77C3IDTWCWQWXHY)
 
 ## Features
 
@@ -64,8 +64,8 @@ cargo test
 ### Optimization and Deployment
 
 ```bash
-stellar contract optimize --wasm target/wasm32-unknown-unknown/release/token.wasm
-stellar contract deploy --wasm target/wasm32-unknown-unknown/release/token.optimized.wasm --source alice --network testnet --alias token
+stellar contract optimize --wasm target/wasm32v1-none/release/token.wasm
+stellar contract deploy --wasm target/wasm32v1-none/release/token.optimized.wasm --source alice --network testnet --alias token
 ```
 
 ### Generating TypeScript Client
