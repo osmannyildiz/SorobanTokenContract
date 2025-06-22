@@ -6,9 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "stellar-refresh-token": "stellar contract build && stellar contract optimize --wasm ../target/wasm32v1-none/release/token.wasm && stellar contract deploy --wasm ../target/wasm32v1-none/release/token.optimized.wasm --source alice --network testnet --alias token && cp -R ../.stellar/ .stellar && stellar contract bindings typescript --network testnet --contract-id token --output-dir packages/token --overwrite && cd packages/token && npm i && npm run build"
   },
   "dependencies": {
+    "@creit.tech/stellar-wallets-kit": "^1.7.5",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",

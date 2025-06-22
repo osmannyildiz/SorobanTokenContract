@@ -76,9 +76,9 @@ stellar contract invoke --id token --source alice --network testnet -- initializ
 ```bash
 cd frontend
 cp -R ../.stellar .stellar
-stellar contract bindings typescript --network testnet --contract-id token --output-dir packages/token
-npm install
-npm run build
+stellar contract bindings typescript --network testnet --contract-id token --output-dir packages/token --overwrite
+cd packages/token
+npm install && npm run build
 ```
 
 ### Starting the Frontend

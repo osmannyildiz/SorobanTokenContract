@@ -32,7 +32,7 @@ export const useWalletStore = create<WalletState>()(
           // Mock connection - in a real app, this would use Freighter or another wallet
           await new Promise((resolve) => setTimeout(resolve, 1500))
 
-          const mockPublicKey = "GBZV3XPQACFVEBFICZPYZLWGDXPQHZMRN4LJDLSIKB3LVPXSQIKVAI7G"
+          const mockPublicKey = "GA77IKJEPCZOB2GLCFVHRHUEM7TFU5YBON55VVTIKMGESIC6ZPZFDV7B"
 
           set({
             isConnected: true,

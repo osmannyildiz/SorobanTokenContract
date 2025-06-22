@@ -36,9 +36,8 @@ export default function Dashboard() {
 
     setIsLoading(true)
     try {
-      // Mock API call to fetch balance
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      setBalance("1000.00")
+      const {result} = await tokenClient.balance({ id: publicKey });
+      setBalance(result.toString())
     } catch (error) {
       console.error("Failed to fetch token balance:", error)
       toast({
